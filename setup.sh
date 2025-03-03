@@ -6,72 +6,13 @@
 #| (_) \__ \>  <    | | | | \__ \ || (_| | | |
 # \___/|___/_/\_\   |_|_| |_|___/\__\__,_|_|_|
 
-
-echo "I  ❤️  🍎"
 echo "Mac OS Install Setup Script"
-echo "By Nina Zakharenko"
-echo "Follow me on twitter! https://twitter.com/nnja"
+echo "By Yann-Thomas Le Moigne"
 
 # Some configs reused from:
 # https://github.com/ruyadorno/installme-osx/
 # https://gist.github.com/millermedeiros/6615994
 # https://gist.github.com/brandonb927/3195465/
-
-# Colorize
-
-# Set the colours you can use
-black=$(tput setaf 0)
-red=$(tput setaf 1)
-green=$(tput setaf 2)
-yellow=$(tput setaf 3)
-blue=$(tput setaf 4)
-magenta=$(tput setaf 5)
-cyan=$(tput setaf 6)
-white=$(tput setaf 7)
-
-# Resets the style
-reset=`tput sgr0`
-
-# Color-echo. Improved. [Thanks @joaocunha]
-# arg $1 = message
-# arg $2 = Color
-cecho() {
-  echo "${2}${1}${reset}"
-  return
-}
-
-echo ""
-cecho "###############################################" $red
-cecho "#        DO NOT RUN THIS SCRIPT BLINDLY       #" $red
-cecho "#         YOU'LL PROBABLY REGRET IT...        #" $red
-cecho "#                                             #" $red
-cecho "#              READ IT THOROUGHLY             #" $red
-cecho "#         AND EDIT TO SUIT YOUR NEEDS         #" $red
-cecho "###############################################" $red
-echo ""
-
-# Set continue to false by default.
-CONTINUE=false
-
-echo ""
-cecho "Have you read through the script you're about to run and " $red
-cecho "understood that it will make changes to your computer? (y/n)" $red
-read -r response
-if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]; then
-  CONTINUE=true
-fi
-
-if ! $CONTINUE; then
-  # Check if we're continuing and output a message if not
-  cecho "Please go read the script, it only takes a few minutes" $red
-  exit
-fi
-
-# Here we go.. ask for the administrator password upfront and run a
-# keep-alive to update existing `sudo` time stamp until script has finished
-sudo -v
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-
 
 ##############################
 # Prerequisite: Install Brew #
@@ -79,16 +20,15 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 echo "Installing brew..."
 
-if test ! $(which brew)
-then
-	## Don't prompt for confirmation when installing homebrew
-  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null
-fi
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Add brew to path
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Latest brew, install brew cask
 brew upgrade
 brew update
-brew tap caskroom/cask
 
 
 #############################################
@@ -122,37 +62,10 @@ else
 EOT
 fi
 
-#############################################
-### Add ssh-key to GitHub via api
-#############################################
+## Install Oh My Zsh
 
-echo "Adding ssh-key to GitHub (via api)..."
-echo "Important! For this step, use a github personal token with the admin:public_key permission."
-echo "If you don't have one, create it here: https://github.com/settings/tokens/new"
-
-retries=3
-SSH_KEY=`cat ~/.ssh/id_rsa.pub`
-
-for ((i=0; i<retries; i++)); do
-      read -p 'GitHub username: ' ghusername
-      read -p 'Machine name: ' ghtitle
-      read -sp 'GitHub personal token: ' ghtoken
-
-      gh_status_code=$(curl -o /dev/null -s -w "%{http_code}\n" -u "$ghusername:$ghtoken" -d '{"title":"'$ghtitle'","key":"'"$SSH_KEY"'"}' 'https://api.github.com/user/keys')
-
-      if (( $gh_status_code -eq == 201))
-      then
-          echo "GitHub ssh key added successfully!"
-          break
-      else
-			echo "Something went wrong. Enter your credentials and try again..."
-     		echo -n "Status code returned: "
-     		echo $gh_status_code
-      fi
-done
-
-[[ $retries -eq i ]] && echo "Adding ssh-key to GitHub failed! Try again later."
-
+echo "Installing Oh My Zsh..."
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 ##############################
 # Install via Brew           #
@@ -160,176 +73,38 @@ done
 
 echo "Starting brew app install..."
 
-### Window Management
-# Todo: Try Divvy and spectacles in the future
-brew cask install sizeup  # window manager
-
-# Start SizeUp at login
-defaults write com.irradiatedsoftware.SizeUp StartAtLogin -bool true
-
-# Don’t show the preferences window on next start
-defaults write com.irradiatedsoftware.SizeUp ShowPrefsOnNextStart -bool false
-
-
-### Developer Tools
-brew cask install iterm2
-brew cask install dash
-brew install ispell
-
+# Install github cli
+brew install gh
 
 ### Development
-brew cask install docker
-brew install postgresql
-brew install redis
-
-
-### Command line tools - install new ones, update others to latest version
-brew install git  # upgrade to latest
-brew install git-lfs # track large files in git https://github.com/git-lfs/git-lfs
-brew install wget
+brew install --cask visual-studio-code
+brew install --cask docker
 brew install zsh # zshell
-brew install tmux
-brew install tree
-brew link curl --force
-brew install grep --with-default-names
-brew install trash  # move to osx trash instead of rm
-brew install less
+brew install asdf
 
-
-### Python
-brew install python
-brew install pyenv
-
-
-### Microcontrollers & Electronics
-brew install avrdude
-brew cask install arduino
-# Manually install teensyduino from:
-# https://www.pjrc.com/teensy/td_download.html
-
-
-### Dev Editors 
-brew cask install visual-studio-code
-brew cask install pycharm
-### spacemacs github.com/syl20bnr/spacemacs
-git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
-brew tap d12frosted/emacs-plus
-brew install emacs-plus --HEAD --with-natural-title-bars
-brew linkapps emacs-plus
-
-
-### Writing
-brew cask install evernote
-brew cask install macdown
-brew cask install notion
-
-
-### Conferences, Blogging, Screencasts
-brew cask install deckset
-brew cask install ImageOptim  # for optimizing images
-brew cask install screenflow
-
+### Configure asdf
+echo -e "\nexport PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"" >> ~/.zshrc
+asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+asdf plugin add java https://github.com/halcyon/asdf-java.git
+asdf install nodejs lts
+asdf install java lts
+asdf set -u nodejs lts
+asdf set -u java lts
 
 ### Productivity
-brew cask install wavebox
-brew cask install google-chrome
-brew cask install alfred
-brew cask install dropbox
-
-brew cask install timing  # time and project tracker
-brew cask install keycastr  # show key presses on screen (for gifs & screencasts)
-brew cask install betterzip
-brew cask install caffeine  # keep computer from sleeping
-brew cask install skitch  # app to annotate screenshots
-brew cask install muzzle
-brew cask install flux
-
-
-### Keyboard & Mouse
-brew cask install karabiner-elements  # remap keys, emacs shortcuts
-brew cask install scroll-reverser  # allow natural scroll for trackpad, not for mouse
-
-
-### Quicklook plugins https://github.com/sindresorhus/quick-look-plugins
-brew cask install qlcolorcode # syntax highlighting in preview
-brew cask install qlstephen  # preview plaintext files without extension
-brew cask install qlmarkdown  # preview markdown files
-brew cask install quicklook-json  # preview json files
-brew cask install epubquicklook  # preview epubs, make nice icons
-brew cask install quicklook-csv  # preview csvs
-
+brew install --cask google-chrome
+brew install --cask caffeine  # keep computer from sleeping
 
 ### Chat / Video Conference
-brew cask install slack
-brew cask install microsoft-teams
-brew cask install zoomus
-brew cask install signal
-
+brew install --cask slack
+brew install --cask microsoft-teams
+brew install --cask discord
 
 ### Music and Video
-brew cask install marshallofsound-google-play-music-player
-brew cask install vlc
-
+brew install --cask spotify
 
 ### Run Brew Cleanup
 brew cleanup
-
-
-#############################################
-### Fonts
-#############################################
-
-echo "Installing fonts..."
-
-brew tap caskroom/fonts
-
-### programming fonts
-brew cask install font-fira-mono-for-powerline
-brew cask install font-fira-code
-
-### SourceCodePro + Powerline + Awesome Regular (for powerlevel 9k terminal icons)
-cd ~/Library/Fonts && { curl -O 'https://github.com/Falkor/dotfiles/blob/master/fonts/SourceCodePro+Powerline+Awesome+Regular.ttf?raw=true' ; cd -; }
-
-
-#############################################
-### Installs from Mac App Store
-#############################################
-
-echo "Installing apps from the App Store..."
-
-### find app ids with: mas search "app name"
-brew install mas
-
-### Mas login is currently broken on mojave. See:
-### Login manually for now.
-
-cecho "Need to log in to App Store manually to install apps with mas...." $red
-echo "Opening App Store. Please login."
-open "/Applications/App Store.app"
-echo "Is app store login complete.(y/n)? "
-read response
-if [ "$response" != "${response#[Yy]}" ]
-then
-	mas install 907364780  # Tomato One - Pomodoro timer
-	mas install 485812721  # Tweetdeck
-	mas install 668208984  # GIPHY Capture. The GIF Maker (For recording my screen as gif)
-	mas install 1351639930 # Gifski, convert videos to gifs
-	mas install 414030210  # Limechat, IRC app.
-else
-	cecho "App Store login not complete. Skipping installing App Store Apps" $red
-fi
-
-
-#############################################
-### Install few global python packages
-#############################################
-
-echo "Installing global Python packages..."
-
-pip3 install --upgrade pip
-pip3 install --user pylint
-pip3 install --user flake8
-
 
 #############################################
 ### Set OSX Preferences - Borrowed from https://github.com/mathiasbynens/dotfiles/blob/master/.macos
@@ -344,9 +119,6 @@ osascript -e 'tell application "System Preferences" to quit'
 ### Finder, Dock, & Menu Items
 ##################
 
-# Finder: allow quitting via ⌘ + Q; doing so will also hide desktop icons
-defaults write com.apple.finder QuitMenuItem -bool true
-
 # Keep folders on top when sorting by name
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 
@@ -356,28 +128,21 @@ defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
 
 # Save to disk (not to iCloud) by default
 defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
-
 # Finder: show all filename extensions
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-
 # Remove the auto-hiding Dock delay
 defaults write com.apple.dock autohide-delay -float 0
-
 # Automatically hide and show the Dock
-defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock autohide -bool false
 
 # Only Show Open Applications In The Dock  
 defaults write com.apple.dock static-only -bool true
-
 # Display full POSIX path as Finder window title
 defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
-
 # Disable the warning when changing a file extension
 defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
-
 # Automatically quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
-
 # Disable the “Are you sure you want to open this application?” dialog
 defaults write com.apple.LaunchServices LSQuarantine -bool false
 
@@ -391,9 +156,6 @@ defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 
 # Minimize windows into their application’s icon
 defaults write com.apple.dock minimize-to-application -bool true
-
-# Automatically hide and show the Dock
-defaults write com.apple.dock autohide -bool true
 
 # Don’t show recent applications in Dock
 #    defaults write com.apple.dock show-recents -bool false
@@ -516,30 +278,14 @@ defaults -currentHost write com.apple.ImageCapture disableHotPlug -bool true
 # Disable the all too sensitive backswipe on trackpads
 defaults write com.google.Chrome AppleEnableSwipeNavigateWithScrolls -bool false
 
-
-#############################################
-### Install dotfiles repo, run link script
-#############################################
-# TODO: 
-# clean up my personal repo to make it public
-# dotfiles for vs code, emacs, gitconfig, oh my zsh, etc. 
-# git clone git@github.com:nnja/dotfiles.git
-# cd dotfiles
-# fetch submodules for oh-my-zsh
-# git submodule init && git submodule update && git submodule status
-# make symbolic links and change shell to zshell
-# ./makesymlinks.sh
-# upgrade_oh_my_zsh
-
-
 echo ""
-cecho "Done!" $cyan
+echo "Done!" $cyan
 echo ""
 echo ""
-cecho "################################################################################" $white
+echo "################################################################################" $white
 echo ""
 echo ""
-cecho "Note that some of these changes require a logout/restart to take effect." $red
+echo "Note that some of these changes require a logout/restart to take effect." $red
 echo ""
 echo ""
 echo -n "Check for and install available OSX updates, install, and automatically restart? (y/n)? "
