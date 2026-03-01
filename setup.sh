@@ -97,6 +97,8 @@ asdf set -u pnpm 10.30.3
 asdf plugin add maven
 asdf install maven 3.9.9
 asdf set -u maven 3.9.9
+asdf install gradle 9.3.1
+asdf set -u gradle 9.3.1
 
 ### Productivity
 brew install --cask google-chrome
