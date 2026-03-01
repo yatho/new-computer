@@ -87,12 +87,13 @@ echo -e "\nexport PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"" >> ~/.zshrc
 asdf plugin add java https://github.com/halcyon/asdf-java.git
 asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
 asdf install java openjdk-21.0.2
-asdf set -u java openjdk-21.0.2
-asdf install nodejs 23.9.0
-asdf set -u nodejs 23.9.0
+asdf install java openjdk-25.0.2
+asdf set -u java openjdk-25.0.2
+asdf install nodejs 24.14.0
+asdf set -u nodejs 24.14.0
 asdf plugin add pnpm
-asdf install pnpm 10.5.2
-asdf set -u pnpm 10.5.2
+asdf install pnpm 10.30.3
+asdf set -u pnpm 10.30.3
 asdf plugin add maven
 asdf install maven 3.9.9
 asdf set -u maven 3.9.9
