@@ -58,7 +58,9 @@ Unchecked:
 
 #### Iterm2
 
-* `setup.sh` installs the dev profile automatically (`iterm/iTerm-Dev-Profile.json`) as an iTerm2 Dynamic Profile: dark theme, Nerd Font, semantic history (cmd-click a file:line from a Java/Angular stack trace to open it in VS Code), and triggers highlighting `BUILD FAILED`/`ERROR` in red and `BUILD SUCCESS` in green.
+* `setup.sh` calls [`iterm-init.sh`](./iterm-init.sh), which installs every profile in `iterm/*.json` as an iTerm2 Dynamic Profile, the Nerd Font they need, and iTerm2 shell integration. Re-run `./iterm-init.sh` on its own any time a profile JSON changes — no need to rerun the whole `setup.sh`.
+* **Dev (Java-Angular-Docker)** (`iterm/iTerm-Dev-Profile.json`): dark theme, Nerd Font, semantic history (cmd-click a file:line from a Java/Angular stack trace to open it in VS Code), and triggers highlighting `BUILD FAILED`/`ERROR` in red and `BUILD SUCCESS` in green.
+* **Presenter (Accessible Light)** (`iterm/iTerm-Presenter-Profile.json`): high-contrast, sober off-white theme for demos, screen shares, and conference talks/recordings — pure black text on a soft off-white (`#EDEAE3`, still 17.5:1 contrast, much less glare than pure white), every ANSI color re-tuned to at least 7:1 against that background (WCAG AAA), 30pt bold font, 80x22 window, no transparency, no badge/watermark text, same build-status triggers as Dev. Switch to it for a new window with `Cmd+Shift+O`, or for the current session via right-click -> Edit Session... -> Change Profile. Once on it, press `Cmd+Enter` to toggle native full screen so it's readable from anywhere in the room or on a video call.
 * Iterm2 -> Preferences -> Profiles -> select **Dev (Java-Angular-Docker)** -> Other Actions -> Set as Default
 * Iterm2 -> Preferences -> Profiles -> Terminal -> confirm Report Terminal Type is `xterm-256color` and Mouse Reporting is on (needed for LazyVim, lazygit, and Claude Code's interactive UI)
 * Iterm2 -> Preferences -> Keys -> Key Mappings -> Presets... -> Natural Text Editing

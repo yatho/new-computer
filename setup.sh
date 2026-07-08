@@ -167,17 +167,10 @@ asdf set -u gradle 9.3.1
 
 echo "Configuring iTerm2..."
 
-# Shell integration: command marks in the scrollbar, jump-to-prompt, and a
-# badge showing the currently running job (docker, mvn, ng serve, etc.)
-curl -L https://iterm2.com/shell_integration/zsh -o ~/.iterm2_shell_integration.zsh
-ITERM_INTEGRATION_LINE='test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"'
-grep -qF "$ITERM_INTEGRATION_LINE" ~/.zshrc 2>/dev/null || echo "$ITERM_INTEGRATION_LINE" >> ~/.zshrc
-
-# Install the dev profile: dark theme, Nerd Font, semantic history (cmd-click
-# a file:line from a Java/Angular stack trace to open it in VS Code), and
-# triggers highlighting BUILD FAILED/ERROR in red, BUILD SUCCESS in green.
-mkdir -p "$HOME/Library/Application Support/iTerm2/DynamicProfiles"
-cp "$(cd "$(dirname "$0")" && pwd)/iterm/iTerm-Dev-Profile.json" "$HOME/Library/Application Support/iTerm2/DynamicProfiles/"
+# Installs every profile in ./iterm/*.json (Dev + Presenter), the Nerd Font
+# they need, and iTerm2 shell integration. See iterm-init.sh — it's also
+# re-runnable standalone whenever a profile JSON changes.
+"$(cd "$(dirname "$0")" && pwd)/iterm-init.sh"
 
 #############################################
 ### Configure shell prompt (Starship)
