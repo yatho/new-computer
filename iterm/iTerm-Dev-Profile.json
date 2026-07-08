@@ -1,0 +1,72 @@
+{
+  "Profiles": [
+    {
+      "Name": "Dev (Java-Angular-Docker)",
+      "Guid": "8f1c9b2a-4e3d-4a7b-9c1e-2d6f0a5b7c31",
+      "Dynamic Profile Parent Name": "Default",
+      "Badge Text": "\\(jobName)",
+      "Working Directory": "",
+      "Custom Directory": "Recycle",
+      "Terminal Type": "xterm-256color",
+      "Use Non-ASCII Font": true,
+      "Normal Font": "MesloLGS-NF-Regular 13",
+      "Non Ascii Font": "MesloLGS-NF-Regular 13",
+      "Horizontal Spacing": 1,
+      "Vertical Spacing": 1,
+      "Unlimited Scrollback": false,
+      "Scrollback Lines": 20000,
+      "Silence Bell": true,
+      "Visual Bell": true,
+      "Flashing Bell": false,
+      "Cursor Type": 1,
+      "Smart Cursor Color": true,
+      "Blinking Cursor": false,
+      "Mouse Reporting": true,
+      "Semantic History": {
+        "action": "command",
+        "editor": "com.microsoft.VSCode",
+        "text": "code -g \\1:\\2"
+      },
+      "Triggers": [
+        {
+          "regex": "(BUILD FAILURE|BUILD FAILED|FAILED|ERROR)",
+          "action": "HighlightTrigger",
+          "parameter": {"text-color": "#FFFFFF", "background-color": "#C0392B"}
+        },
+        {
+          "regex": "(BUILD SUCCESS|BUILD SUCCESSFUL|Compiled successfully)",
+          "action": "HighlightTrigger",
+          "parameter": {"text-color": "#000000", "background-color": "#2ECC71"}
+        },
+        {
+          "regex": "warning:",
+          "action": "HighlightTrigger",
+          "parameter": {"text-color": "#000000", "background-color": "#F1C40F"}
+        }
+      ],
+      "Background Color": {"Red Component": 0.11, "Green Component": 0.12, "Blue Component": 0.15, "Alpha Component": 1},
+      "Foreground Color": {"Red Component": 0.85, "Green Component": 0.87, "Blue Component": 0.90, "Alpha Component": 1},
+      "Bold Color": {"Red Component": 1, "Green Component": 1, "Blue Component": 1, "Alpha Component": 1},
+      "Cursor Color": {"Red Component": 0.35, "Green Component": 0.78, "Blue Component": 0.98, "Alpha Component": 1},
+      "Cursor Text Color": {"Red Component": 0, "Green Component": 0, "Blue Component": 0, "Alpha Component": 1},
+      "Selection Color": {"Red Component": 0.27, "Green Component": 0.35, "Blue Component": 0.45, "Alpha Component": 1},
+      "Selected Text Color": {"Red Component": 1, "Green Component": 1, "Blue Component": 1, "Alpha Component": 1},
+      "Ansi 0 Color": {"Red Component": 0.13, "Green Component": 0.14, "Blue Component": 0.17, "Alpha Component": 1},
+      "Ansi 1 Color": {"Red Component": 0.88, "Green Component": 0.29, "Blue Component": 0.30, "Alpha Component": 1},
+      "Ansi 2 Color": {"Red Component": 0.60, "Green Component": 0.80, "Blue Component": 0.40, "Alpha Component": 1},
+      "Ansi 3 Color": {"Red Component": 0.90, "Green Component": 0.75, "Blue Component": 0.30, "Alpha Component": 1},
+      "Ansi 4 Color": {"Red Component": 0.35, "Green Component": 0.60, "Blue Component": 0.90, "Alpha Component": 1},
+      "Ansi 5 Color": {"Red Component": 0.70, "Green Component": 0.50, "Blue Component": 0.85, "Alpha Component": 1},
+      "Ansi 6 Color": {"Red Component": 0.30, "Green Component": 0.75, "Blue Component": 0.80, "Alpha Component": 1},
+      "Ansi 7 Color": {"Red Component": 0.80, "Green Component": 0.82, "Blue Component": 0.85, "Alpha Component": 1},
+      "Ansi 8 Color": {"Red Component": 0.40, "Green Component": 0.42, "Blue Component": 0.46, "Alpha Component": 1},
+      "Ansi 9 Color": {"Red Component": 0.95, "Green Component": 0.40, "Blue Component": 0.40, "Alpha Component": 1},
+      "Ansi 10 Color": {"Red Component": 0.70, "Green Component": 0.88, "Blue Component": 0.50, "Alpha Component": 1},
+      "Ansi 11 Color": {"Red Component": 0.98, "Green Component": 0.85, "Blue Component": 0.45, "Alpha Component": 1},
+      "Ansi 12 Color": {"Red Component": 0.50, "Green Component": 0.72, "Blue Component": 0.98, "Alpha Component": 1},
+      "Ansi 13 Color": {"Red Component": 0.80, "Green Component": 0.62, "Blue Component": 0.95, "Alpha Component": 1},
+      "Ansi 14 Color": {"Red Component": 0.45, "Green Component": 0.85, "Blue Component": 0.90, "Alpha Component": 1},
+      "Ansi 15 Color": {"Red Component": 0.95, "Green Component": 0.96, "Blue Component": 0.98, "Alpha Component": 1}
+    }
+  ]
+}

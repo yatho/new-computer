@@ -28,7 +28,56 @@ git config --global gitbutler.gitbutlerCommitter 0
 # Core                       #
 ##############################
 
+if [ ! -f ~/.gitignore_global ]; then
+  cat <<EOT > ~/.gitignore_global
+# macOS
+.DS_Store
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.iml
+
+# Java / Gradle / Maven
+target/
+build/
+*.class
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Logs
+*.log
+EOT
+fi
+
 git config --global core.excludesfile ~/.gitignore_global
+
+##############################
+# Credential                 #
+##############################
+
+git config --global credential.helper osxkeychain
+
+##############################
+# Commit Signing (SSH key)   #
+##############################
+
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --global commit.gpgsign true
+
+# Register the same key as a *signing* key on GitHub (separate registration
+# from the authentication key added in setup.sh) so commits show as "Verified"
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+  gh ssh-key add ~/.ssh/id_ed25519.pub --type signing --title "$(scutil --get ComputerName 2>/dev/null || hostname) (signing)" \
+    || echo "Could not add the signing key via gh — it may already be registered, or your token is missing the write:ssh_signing_key scope. Try: gh auth refresh -h github.com -s write:ssh_signing_key"
+else
+  echo "gh CLI isn't authenticated — skipping automatic signing-key registration."
+  echo "Run 'gh auth login' then re-run this script, or add ~/.ssh/id_ed25519.pub manually as a Signing Key at https://github.com/settings/ssh/new"
+fi
 
 ##############################
 # Branch                     #

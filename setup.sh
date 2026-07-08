@@ -22,9 +22,16 @@ echo "Installing brew..."
 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# Add brew to path
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# Add brew to path (Apple Silicon uses /opt/homebrew, Intel uses /usr/local)
+if [ -d /opt/homebrew/bin ]; then
+  BREW_SHELLENV='eval "$(/opt/homebrew/bin/brew shellenv)"'
+  IS_APPLE_SILICON=true
+else
+  BREW_SHELLENV='eval "$(/usr/local/bin/brew shellenv)"'
+  IS_APPLE_SILICON=false
+fi
+grep -qF "$BREW_SHELLENV" ~/.zprofile 2>/dev/null || echo "$BREW_SHELLENV" >> ~/.zprofile
+eval "$BREW_SHELLENV"
 
 # Latest brew, install brew cask
 brew upgrade
@@ -37,15 +44,21 @@ brew update
 #############################################
 
 echo "Generating ssh keys, adding to ssh-agent..."
-read -p 'Input email for ssh key: ' useremail
 
-echo "Use default ssh file location, enter a passphrase: "
-ssh-keygen -t rsa -b 4096 -C "$useremail"  # will prompt for password
+SSH_KEY_PATH=~/.ssh/id_ed25519
+
+if [ -e "$SSH_KEY_PATH" ]; then
+  echo "SSH key already exists at $SSH_KEY_PATH. Skipping generation..."
+else
+  read -p 'Input email for ssh key: ' useremail
+  echo "Use default ssh file location, enter a passphrase: "
+  ssh-keygen -t ed25519 -C "$useremail" -f "$SSH_KEY_PATH"  # will prompt for password
+fi
+
 eval "$(ssh-agent -s)"
 
-# Now that sshconfig is synced add key to ssh-agent and
-# store passphrase in keychain
-ssh-add -K ~/.ssh/id_rsa
+# Add key to ssh-agent and store passphrase in keychain
+ssh-add --apple-use-keychain "$SSH_KEY_PATH"
 
 # If you're using macOS Sierra 10.12.2 or later, you will need to modify your ~/.ssh/config file to automatically load keys into the ssh-agent and store passphrases in your keychain.
 
@@ -58,7 +71,7 @@ else
 	Host *
 		AddKeysToAgent yes
 		UseKeychain yes
-		IdentityFile ~/.ssh/id_rsa
+		IdentityFile ~/.ssh/id_ed25519
 EOT
 fi
 
@@ -76,14 +89,57 @@ echo "Starting brew app install..."
 # Install github cli
 brew install gh
 
+# Authenticate gh, then register the new SSH key with GitHub
+if ! gh auth status >/dev/null 2>&1; then
+  gh auth login
+fi
+gh ssh-key add "${SSH_KEY_PATH}.pub" --title "$(scutil --get ComputerName 2>/dev/null || hostname)" || echo "Could not add SSH key via gh — it may already be registered. Check with 'gh ssh-key list'."
+
 ### Development
 brew install --cask visual-studio-code
 brew install --cask docker
 brew install zsh # zshell
 brew install asdf
+brew install git-interactive-rebase-tool
+
+### AI tooling (Claude Code, Claude Desktop, local LLMs via Ollama)
+brew install --cask claude-code
+brew install --cask claude
+brew install ollama
+brew services start ollama
+
+# Pull a couple of starter models (adjust/remove as needed — multi-GB downloads)
+ollama pull gemma4:e4b        # ~9.6GB, fast multimodal general-purpose model, runs well on laptops
+ollama pull devstral-small-2  # ~15GB, coding-focused model (Mistral Devstral)
+ollama pull llama3.2          # ~2GB, small/fast general-purpose model
+
+# Quick-run aliases for the local models above
+GEMMA_ALIAS_LINE="alias gemma4='ollama run gemma4:e4b'"
+grep -qF "$GEMMA_ALIAS_LINE" ~/.zshrc 2>/dev/null || echo "$GEMMA_ALIAS_LINE" >> ~/.zshrc
+DEVSTRAL_ALIAS_LINE="alias devstral='ollama run devstral-small-2'"
+grep -qF "$DEVSTRAL_ALIAS_LINE" ~/.zshrc 2>/dev/null || echo "$DEVSTRAL_ALIAS_LINE" >> ~/.zshrc
+LLAMA_ALIAS_LINE="alias llama='ollama run llama3.2'"
+grep -qF "$LLAMA_ALIAS_LINE" ~/.zshrc 2>/dev/null || echo "$LLAMA_ALIAS_LINE" >> ~/.zshrc
+
+### Terminal & CLI tools (iTerm2, lazygit, LazyVim, Starship prompt)
+brew install --cask iterm2
+brew install --cask font-meslo-lg-nerd-font
+brew install starship
+brew install lazygit
+brew install lazydocker
+brew install neovim
+brew install ripgrep
+brew install fd
+brew install fzf
+brew install zsh-autosuggestions
+brew install zsh-syntax-highlighting
+brew install zoxide
+brew install eza
+brew install bat
 
 ### Configure asdf
-echo -e "\nexport PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"" >> ~/.zshrc
+ASDF_PATH_LINE='export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"'
+grep -qF "$ASDF_PATH_LINE" ~/.zshrc 2>/dev/null || printf '\n%s\n' "$ASDF_PATH_LINE" >> ~/.zshrc
 asdf plugin add java https://github.com/halcyon/asdf-java.git
 asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
 asdf install java openjdk-21.0.2
@@ -94,11 +150,94 @@ asdf set -u nodejs 24.14.0
 asdf plugin add pnpm
 asdf install pnpm 10.30.3
 asdf set -u pnpm 10.30.3
+
+# Angular CLI (global, via pnpm)
+pnpm add -g @angular/cli
+
 asdf plugin add maven
 asdf install maven 3.9.9
 asdf set -u maven 3.9.9
 asdf install gradle 9.3.1
 asdf set -u gradle 9.3.1
+
+#############################################
+### Configure iTerm2 (theme, semantic history,
+### build/error highlighting) + shell integration
+#############################################
+
+echo "Configuring iTerm2..."
+
+# Shell integration: command marks in the scrollbar, jump-to-prompt, and a
+# badge showing the currently running job (docker, mvn, ng serve, etc.)
+curl -L https://iterm2.com/shell_integration/zsh -o ~/.iterm2_shell_integration.zsh
+ITERM_INTEGRATION_LINE='test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"'
+grep -qF "$ITERM_INTEGRATION_LINE" ~/.zshrc 2>/dev/null || echo "$ITERM_INTEGRATION_LINE" >> ~/.zshrc
+
+# Install the dev profile: dark theme, Nerd Font, semantic history (cmd-click
+# a file:line from a Java/Angular stack trace to open it in VS Code), and
+# triggers highlighting BUILD FAILED/ERROR in red, BUILD SUCCESS in green.
+mkdir -p "$HOME/Library/Application Support/iTerm2/DynamicProfiles"
+cp "$(cd "$(dirname "$0")" && pwd)/iterm/iTerm-Dev-Profile.json" "$HOME/Library/Application Support/iTerm2/DynamicProfiles/"
+
+#############################################
+### Configure shell prompt (Starship)
+#############################################
+
+echo "Configuring Starship prompt..."
+STARSHIP_INIT_LINE='eval "$(starship init zsh)"'
+grep -qF "$STARSHIP_INIT_LINE" ~/.zshrc 2>/dev/null || echo "$STARSHIP_INIT_LINE" >> ~/.zshrc
+
+#############################################
+### Shell comfort tools (fzf, zoxide, eza, bat,
+### autosuggestions, syntax highlighting)
+#############################################
+
+echo "Configuring shell comfort tools..."
+
+# fzf: fuzzy Ctrl+R history search and Ctrl+T file search
+# (its installer manages its own idempotent config block in ~/.zshrc)
+"$(brew --prefix)/opt/fzf/install" --all --no-bash --no-fish
+
+# zoxide: smarter cd, jump to frecent directories with `z <partial-name>`
+ZOXIDE_INIT_LINE='eval "$(zoxide init zsh)"'
+grep -qF "$ZOXIDE_INIT_LINE" ~/.zshrc 2>/dev/null || echo "$ZOXIDE_INIT_LINE" >> ~/.zshrc
+
+# eza / bat: nicer ls / cat, with Nerd Font icons and syntax highlighting
+EZA_ALIAS_LINE="alias ls='eza --icons --group-directories-first'"
+grep -qF "$EZA_ALIAS_LINE" ~/.zshrc 2>/dev/null || echo "$EZA_ALIAS_LINE" >> ~/.zshrc
+BAT_ALIAS_LINE="alias cat='bat --paging=never'"
+grep -qF "$BAT_ALIAS_LINE" ~/.zshrc 2>/dev/null || echo "$BAT_ALIAS_LINE" >> ~/.zshrc
+
+# zsh-autosuggestions: must load before zsh-syntax-highlighting
+AUTOSUGGEST_LINE='source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"'
+grep -qF "$AUTOSUGGEST_LINE" ~/.zshrc 2>/dev/null || echo "$AUTOSUGGEST_LINE" >> ~/.zshrc
+
+# zsh-syntax-highlighting: must be the last thing sourced in ~/.zshrc
+SYNTAX_HIGHLIGHT_LINE='source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"'
+grep -qF "$SYNTAX_HIGHLIGHT_LINE" ~/.zshrc 2>/dev/null || echo "$SYNTAX_HIGHLIGHT_LINE" >> ~/.zshrc
+
+#############################################
+### Install LazyVim (Neovim distro)
+#############################################
+
+echo "Installing LazyVim..."
+if [ ! -d ~/.config/nvim ]; then
+  git clone https://github.com/LazyVim/starter ~/.config/nvim
+  rm -rf ~/.config/nvim/.git
+fi
+
+#############################################
+### Configure lazygit (Nerd Font icons)
+#############################################
+
+echo "Configuring lazygit..."
+mkdir -p ~/.config/lazygit
+if [ ! -f ~/.config/lazygit/config.yml ] || ! grep -q "nerdFontsVersion" ~/.config/lazygit/config.yml; then
+  cat <<EOT >> ~/.config/lazygit/config.yml
+gui:
+  nerdFontsVersion: "3"
+EOT
+fi
 
 ### Productivity
 brew install --cask google-chrome
